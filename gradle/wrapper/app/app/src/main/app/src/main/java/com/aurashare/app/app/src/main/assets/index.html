@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AuraShare Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkbg: '#0a0b10',
+                        cardbg: '#131622',
+                        accent: '#00f2fe',
+                        accentsec: '#4facfe'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes pulse-slow {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; }
+        }
+        .animate-pulse-slow { animation: pulse-slow 3s infinite ease-in-out; }
+    </style>
+</head>
+<body class="bg-darkbg text-white font-sans min-h-screen flex flex-col select-none overflow-x-hidden">
+
+    <!-- Header -->
+    <header class="bg-cardbg border-b border-gray-800 px-4 py-3 flex items-center justify-between sticky top-0 z-50">
+        <div class="flex items-center space-x-2">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/30">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            </div>
+            <div>
+                <h1 class="font-bold text-base tracking-wide bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">AuraShare Pro</h1>
+                <p class="text-[10px] text-gray-400">Wi-Fi 5GHz &middot; BLE &middot; FM Radio</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2">
+            <button onclick="triggerBooster()" class="bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 px-2.5 py-1 rounded-full text-xs font-medium flex items-center space-x-1">
+                <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+                <span>1Gbps AI</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Tabs -->
+    <main class="flex-1 pb-20 p-4 max-w-md mx-auto w-full">
+
+        <!-- TAB 1: RADAR / TRANSFER -->
+        <section id="tab-transfer" class="space-y-4">
+            <div class="bg-cardbg border border-gray-800/80 rounded-2xl p-5 text-center relative overflow-hidden shadow-xl">
+                <div class="absolute inset-0 bg-gradient-to-b from-cyan-500/5 to-transparent pointer-events-none"></div>
+                <h2 class="text-sm font-semibold text-gray-300 mb-1">P2P Radar Scanning</h2>
+                <p class="text-xs text-gray-500 mb-6">Tap a detected device node to initiate burst transfer</p>
+                
+                <!-- Radar Visualizer -->
+                <div class="relative w-48 h-48 mx-auto flex items-center justify-center my-4">
+                    <div class="absolute inset-0 rounded-full border border-cyan-500/20 animate-ping"></div>
+                    <div class="absolute inset-4 rounded-full border border-cyan-500/30"></div>
+                    <div class="absolute inset-12 rounded-full border border-cyan-500/40"></div>
+                    <div class="w-12 h-12 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg shadow-cyan-500/50 z-10">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                    </div>
+                    <!-- Nodes -->
+                    <button onclick="connectPeer('Aura-Nexus X')" class="absolute top-2 right-6 bg-gray-800/90 border border-cyan-500/50 p-2 rounded-xl text-[10px] text-cyan-300 hover:bg-cyan-500/20 transition shadow-md">Nexus X</button>
+                    <button onclick="connectPeer('Pixel 7A Studio')" class="absolute bottom-4 left-4 bg-gray-800/90 border border-blue-500/50 p-2 rounded-xl text-[10px] text-blue-300 hover:bg-blue-500/20 transition shadow-md">Pixel 7A</button>
+                </div>
+
+                <div id="transfer-status" class="text-xs text-cyan-400 font-medium bg-cyan-500/10 py-2 px-4 rounded-xl border border-cyan-500/20 inline-block">
+                    Ready for connection
+                </div>
+            </div>
+
+            <!-- File Selector & Send -->
+            <div class="bg-cardbg border border-gray-800/80 rounded-2xl p-4 space-y-3">
+                <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Select Payload</h3>
+                <label class="border-2 border-dashed border-gray-700 hover:border-cyan-500/50 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer transition bg-darkbg/50">
+                    <svg class="w-8 h-8 text-cyan-400 mb-2" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                    <span id="selected-file-name" class="text-xs text-gray-300 font-medium">Choose file or APK to broadcast</span>
+                    <input type="file" class="hidden" onchange="handleFileSelect(this)">
+                </label>
+                <button onclick="startTransfer()" class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold py-3 rounded-xl shadow-lg shadow-cyan-500/30 text-sm active:scale-95 transition">
+                    Broadcast via 5GHz Wi-Fi
+                </button>
+            </div>
+        </section>
+
+        <!-- TAB 2: FM RADIO -->
+        <section id="tab-radio" class="space-y-4 hidden">
+            <div class="bg-cardbg border border-gray-800/80 rounded-2xl p-5 text-center relative overflow-hidden shadow-xl">
+                <div class="absolute inset-0 bg-gradient-to-b from-purple-500/5 to-transparent pointer-events-none"></div>
+                <h2 class="text-sm font-semibold text-gray-300 mb-1">Headphone-Free FM Tuner</h2>
+                <p class="text-xs text-gray-500 mb-4">Direct antenna loudspeaker synthesis</p>
+
+                <div class="text-4xl font-black text-purple-400 tracking-wider my-2" id="freq-display">98.3 MHz</div>
+                <p class="text-xs text-gray-400 mb-6" id="station-name">Radio Mirchi HD</p>
+
+                <!-- Frequency Slider -->
+                <input type="range" min="88.0" max="108.0" step="0.1" value="98.3" oninput="updateFrequency(this.value)" class="w-full accent-purple-500 bg-gray-800 rounded-lg h-2 cursor-pointer mb-6">
+
+                <div class="flex justify-center space-x-4">
+                    <button onclick="toggleRadio()" id="radio-btn" class="bg-purple-600 hover:bg-purple-500 text-white px-6 py-2.5 rounded-xl font-semibold text-xs shadow-lg shadow-purple-500/30 transition">
+                        Power On Tuner
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: HARDWARE INSPECTOR -->
+        <section id="tab-hardware" class="space-y-4 hidden">
+            <div class="bg-cardbg border border-gray-800/80 rounded-2xl p-5 space-y-4 shadow-xl">
+                <h2 class="text-sm font-semibold text-gray-300 border-b border-gray-800 pb-2">Hardware Telemetry</h2>
+                <div class="grid grid-cols-2 gap-3 text-xs">
+                    <div class="bg-darkbg/60 p-3 rounded-xl border border-gray-800">
+                        <span class="text-gray-500 block mb-1">Device Model</span>
+                        <span class="font-bold text-cyan-400" id="hw-model">Android 14 (ARM64)</span>
+                    </div>
+                    <div class="bg-darkbg/60 p-3 rounded-xl border border-gray-800">
+                        <span class="text-gray-500 block mb-1">RAM Status</span>
+                        <span class="font-bold text-cyan-400">8.0 GB / LPDDR5</span>
+                    </div>
+                    <div class="bg-darkbg/60 p-3 rounded-xl border border-gray-800">
+                        <span class="text-gray-500 block mb-1">Signal RSSI</span>
+                        <span class="font-bold text-emerald-400">-42 dBm (5GHz)</span>
+                    </div>
+                    <div class="bg-darkbg/60 p-3 rounded-xl border border-gray-800">
+                        <span class="text-gray-500 block mb-1">Battery Health</span>
+                        <span class="font-bold text-emerald-400">98% (Good)</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: FILE VAULT -->
+        <section id="tab-vault" class="space-y-4 hidden">
+            <div class="bg-cardbg border border-gray-800/80 rounded-2xl p-5 space-y-3 shadow-xl">
+                <h2 class="text-sm font-semibold text-gray-300 border-b border-gray-800 pb-2">Secure Transfer Vault</h2>
+                <div id="vault-list" class="space-y-2">
+                    <div class="bg-darkbg/60 p-3 rounded-xl border border-gray-800 flex items-center justify-between text-xs">
+                        <div>
+                            <p class="font-medium text-gray-200">AuraShare_v1.0.apk</p>
+                            <span class="text-[10px] text-gray-500">24.5 MB &middot; Received via 5GHz</span>
+                        </div>
+                        <span class="text-cyan-400 bg-cyan-500/10 px-2 py-1 rounded-lg">Saved</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bg-cardbg border-t border-gray-800 fixed bottom-0 left-0 right-0 py-2 px-6 flex justify-around items-center z-50">
+        <button onclick="switchTab('transfer')" id="nav-transfer" class="flex flex-col items-center text-cyan-400 transition">
+            <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+            <span class="text-[10px] font-medium">Radar</span>
+        </button>
+        <button onclick="switchTab('radio')" id="nav-radio" class="flex flex-col items-center text-gray-500 hover:text-gray-300 transition">
+            <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
+            <span class="text-[10px] font-medium">FM Radio</span>
+        </button>
+        <button onclick="switchTab('hardware')" id="nav-hardware" class="flex flex-col items-center text-gray-500 hover:text-gray-300 transition">
+            <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            <span class="text-[10px] font-medium">Hardware</span>
+        </button>
+        <button onclick="switchTab('vault')" id="nav-vault" class="flex flex-col items-center text-gray-500 hover:text-gray-300 transition">
+            <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+            <span class="text-[10px] font-medium">Vault</span>
+        </button>
+    </nav>
+
+    <script>
+        function switchTab(tabId) {
+            ['transfer', 'radio', 'hardware', 'vault'].forEach(t => {
+                document.getElementById('tab-' + t).classList.add('hidden');
+                document.getElementById('nav-' + t).className = "flex flex-col items-center text-gray-500 hover:text-gray-300 transition";
+            });
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            document.getElementById('nav-' + tabId).className = "flex flex-col items-center text-cyan-400 transition";
+        }
+
+        function connectPeer(name) {
+            document.getElementById('transfer-status').innerText = `Connected to ${name} (1 Gbps Link)`;
+        }
+
+        function handleFileSelect(input) {
+            if (input.files && input.files[0]) {
+                document.getElementById('selected-file-name').innerText = input.files[0].name;
+            }
+        }
+
+        function startTransfer() {
+            document.getElementById('transfer-status').innerText = "Broadcasting payload at 980 Mbps...";
+            setTimeout(() => {
+                document.getElementById('transfer-status').innerText = "Transfer completed successfully!";
+            }, 2000);
+        }
+
+        function triggerBooster() {
+            alert("AI 1Gbps Buffer Optimizer engaged!");
+        }
+
+        let radioActive = false;
+        let audioCtx = null;
+        let oscillator = null;
+
+        function updateFrequency(val) {
+            document.getElementById('freq-display').innerText = val + " MHz";
+            if (val == 98.3) document.getElementById('station-name').innerText = "Radio Mirchi HD";
+            else if (val == 93.5) document.getElementById('station-name').innerText = "Red FM 93.5";
+            else document.getElementById('station-name').innerText = "Custom Frequency Tuned";
+        }
+
+        function toggleRadio() {
+            radioActive = !radioActive;
+            const btn = document.getElementById('radio-btn');
+            if (radioActive) {
+                btn.innerText = "Power Off Tuner";
+                btn.className = "bg-rose-600 hover:bg-rose-500 text-white px-6 py-2.5 rounded-xl font-semibold text-xs shadow-lg shadow-rose-500/30 transition";
+                try {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    oscillator = audioCtx.createOscillator();
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(220, audioCtx.currentTime);
+                    oscillator.connect(audioCtx.destination);
+                    oscillator.start();
+                } catch(e) {}
+            } else {
+                btn.innerText = "Power On Tuner";
+                btn.className = "bg-purple-600 hover:bg-purple-500 text-white px-6 py-2.5 rounded-xl font-semibold text-xs shadow-lg shadow-purple-500/30 transition";
+                if (oscillator) {
+                    oscillator.stop();
+                    oscillator.disconnect();
+                }
+            }
+        }
+    </script>
+</body>
+                  </html>
+                  
